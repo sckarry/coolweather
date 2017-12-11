@@ -5,10 +5,14 @@ import android.text.TextUtils;
 import com.example.sc.coolweather.db.City;
 import com.example.sc.coolweather.db.County;
 import com.example.sc.coolweather.db.Province;
+import com.example.sc.coolweather.gson.Weather;
+import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.litepal.crud.DataSupport;
 
 public class Utility {
     public static boolean handleProvinceResponse(String response){
@@ -72,5 +76,17 @@ public class Utility {
         }
         return false;
         }
+public static Weather handleWeatherResponse(String response) {
+    try {
+        JSONObject jsonObject = new JSONObject(response);
+        JSONArray jsonArray = jsonObject.getJSONArray("HeWeather");
+        String weatherContent = jsonArray.getJSONObject(0).toString();
+        return new Gson().fromJson(weatherContent, Weather.class);
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+    return null;
+}
+
+}
 

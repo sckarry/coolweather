@@ -1,4 +1,7 @@
 package com.example.sc.coolweather.db;
+
+import org.litepal.crud.DataSupport;
+
 public class County extends DataSupport {
     private int id;
     private String countyName;

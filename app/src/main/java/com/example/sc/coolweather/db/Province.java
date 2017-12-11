@@ -1,5 +1,5 @@
 package com.example.sc.coolweather.db;
-
+import org.litepal.crud.DataSupport;
 /**
  * Created by sc on 2017/12/4.
  */
@@ -21,7 +21,7 @@ public class Province extends DataSupport {
         return provinceName;
     }
 
-    public static void setProvinceName(String provinceName) {
+    public void setProvinceName(String provinceName) {
         this.provinceName = provinceName;
     }
 
@@ -32,4 +32,6 @@ public class Province extends DataSupport {
     public void setProvinceCode(int provinceCode) {
         this.provinceCode = provinceCode;
     }
+
+
 }

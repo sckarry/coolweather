@@ -2,6 +2,7 @@ package com.example.sc.coolweather;
 
 import android.app.Fragment;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.telecom.Call;
@@ -23,11 +24,15 @@ import com.example.sc.coolweather.db.Province;
 import com.example.sc.coolweather.util.HttpUtil;
 import com.example.sc.coolweather.util.Utility;
 
+import org.litepal.crud.DataSupport;
 import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.Callback;
+import okhttp3.Response;
 
 /**
  * Created by sc on 2017/12/4.
@@ -45,12 +50,17 @@ public class ChooseAreaFragment extends Fragment {
     private List<String>dataList=new ArrayList<>();
 
     private List<Province> provinceList;
+
     private List<City>cityList;
+
     private List<County>countyList;
+
     private Province selectedProvince;
+
     private City selectedCity;
+
     private int currentLevel;
-    private int CurrentLevel;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         View view=inflater.inflate(R.layout.choose_area,container,false);
@@ -66,20 +76,39 @@ public class ChooseAreaFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             @Override
-            public void onItemClick(AdapterView<?>parent,View view,int position,long id){
+            public void onItemClick(AdapterView<?>parent,View view,int position,long id)
+            {
                 if(currentLevel==LEVEL_PROVINCE){
                     selectedProvince=provinceList.get(position);
-                   queryCounties();
+                   queryCities();
 
+                }
+                else if(currentLevel==LEVEL_CITY){
+                    selectedCity=cityList.get(position);
+                    queryCounties();
+                }
+                else if(currentLevel==LEVEL_COUNTY){
+                    String weatherId=countyList.get(position).getWeatherId();
+                    if(getActivity() instanceof MainActivity) {
+                        Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                        intent.putExtra("weather_id", weatherId);
+                        startActivity(intent);
+                        getActivity().finish();
+                    }else if(getActivity() instanceof  WeatherActivity){
+                        WeatherActivity activity=(WeatherActivity)getActivity();
+                        activity.drawerLayout.closeDrawers();
+                        activity.swipeRefresh.setRefreshing(true);
+                        activity.requestWeather(weatherId);
+
+                    }
                 }
             }
 
 
         });
-    }
 
 
-    backButton.setOnclickListener(new View.OnClickListener(){
+    backButton.setOnClickListener(new View.OnClickListener(){
         @Override
         public void onClick(View v){
             if(currentLevel==LEVEL_COUNTY)
@@ -93,11 +122,9 @@ public class ChooseAreaFragment extends Fragment {
         }
     });
 
-    queryProvinces() {
+    queryProvinces();
 
     }
-
-
      private void queryProvinces() {
     titleText.setText("中国");
     backButton.setVisibility(View.GONE);
@@ -118,10 +145,10 @@ public class ChooseAreaFragment extends Fragment {
 
     }
 }
-    private void queryCounties(){
+    private void queryCities(){
         titleText.setText(selectedProvince.getProvinceName());
         backButton.setVisibility(View.VISIBLE);
-        cityList=DataSupport.where("province=?",String.valueOf(selectedProvince.getId())).find(city.class);
+        cityList=DataSupport.where("province=?",String.valueOf(selectedProvince.getId())).find(City.class);
         if(cityList.size()>0){
             dataList.clear();
             for (City city:cityList){
@@ -142,28 +169,6 @@ public class ChooseAreaFragment extends Fragment {
     private void queryCounties(){
         titleText.setText(selectedCity.getCityName());
         backButton.setVisibility(View.VISIBLE);
-        cityList=DataSupport.where("provinceid=?",String.valueOf(selectedProvince.getId())).find(City.class);
-        if(cityList.size()>0){
-            dataList.clear();
-            for(City city:cityList){
-                dataList.add(city.getCityName());
-
-            }
-            adapter.notifyDataSetChanged();
-            listView.setSelection(0);
-            currentLevel=LEVEL_CITY;
-        }
-        else{
-            int provinceCode=selectedProvince.getProvinceCode();
-            String address="http://guolin.tech/api/china/"+provinceCode;
-            queryFromServer(address,"city");
-
-        }
-
-    }
-    private void queryCounties(){
-        titleText.setText(selectedCity.getCityName());
-        backButton.setVisibility(View.VISIBLE);
         countyList=DataSupport.where("cityid=?",String.valueOf(selectedCity.getId())).find(County.class);
         if(countyList.size()>0){
             dataList.clear();
@@ -174,22 +179,21 @@ public class ChooseAreaFragment extends Fragment {
             adapter.notifyDataSetChanged();
             listView.setSelection(0);
             currentLevel=LEVEL_COUNTY;
-
         }
         else{
-            int provincedCode=selectedProvince.getProvinceCode();
+            int provinceCode=selectedProvince.getProvinceCode();
             int cityCode=selectedCity.getCityCode();
-            String address="http://guolin.tech/api/china/"+provincedCode+"/"+cityCode;
+            String address="http://guolin.tech/api/china/"+provinceCode+"/"+cityCode;
             queryFromServer(address,"county");
 
-
         }
+
     }
     private void queryFromServer(String address,final String type){
         showProgressDialog();
-        HttpUtil.sendOkHttpRequest(address,new Callback(){
+        HttpUtil.sendOkHttpRequest(address, new Callback() {
             @Override
-            public void onResponse(Call call,Response response)throws IOException{
+            public void onResponse(okhttp3.Call call, Response response) throws IOException {
                 String responseText=response.body().string();
                 boolean result=false;
                 if("province".equals(type)){
@@ -216,7 +220,8 @@ public class ChooseAreaFragment extends Fragment {
                                 queryCities();
 
                             }
-                            else if("County".equals(type));{
+                            else if("County".equals(type))
+                            {
                                 queryCounties();
                             }
                         }
@@ -224,7 +229,7 @@ public class ChooseAreaFragment extends Fragment {
                 }
             }
             @Override
-            public void onFailure(Call call.IOException e){
+            public void onFailure(okhttp3.Call call,IOException e){
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

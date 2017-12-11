@@ -1,5 +1,7 @@
 package com.example.sc.coolweather.db;
 
+import org.litepal.crud.DataSupport;
+
 /**
  * Created by sc on 2017/12/4.
  */
