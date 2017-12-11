@@ -1,5 +1,6 @@
 package com.example.sc.coolweather;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
@@ -209,6 +210,9 @@ public class WeatherActivity extends AppCompatActivity {
             maxText.setText(forecast.temperature.max);
             minText.setText(forecast.temperature.min);
             forecastLayout.addView(view);
+            weatherLayout.setVisibility(View.VISIBLE);
+            Intent intent=new Intent(this,AutoUpdateService.class);
+            startActivity(intent);
         }
         if(weather.aqi!=null){
             aqiText.setText(weather.aqi.city.aqi);
